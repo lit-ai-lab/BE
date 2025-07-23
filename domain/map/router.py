@@ -7,13 +7,10 @@ from crud.map import (
     # get_top10_categories,
     # get_sunburst_categories_only,
     # get_top10_tasks_by_category,
-    get_category_task_summary
-)
+    get_category_task_summary)
 
-router = APIRouter(
-    prefix="/api/maps",
-    tags=["Map"]
-)
+router = APIRouter(prefix="", tags=["Map"])
+
 
 def simplify_region_name(region: Optional[str]) -> Optional[str]:
     if region is None:

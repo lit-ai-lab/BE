@@ -1,27 +1,60 @@
-from fastapi import HTTPException
+
 from sqlalchemy.orm import Session
-from crud import viewer as viewer_crud
-from schemas import ViewerFilter, ViewerDetailResponse
-from utils.excel import generate_excel_from_viewers
+from models import Viewer
+from schemas import ViewerFilter
+from typing import List, Dict, Any
 
-def filter_viewers(db: Session, filters: ViewerFilter):
-    return viewer_crud.get_filtered_viewers(db, filters)
-
-def get_viewer_detail(db: Session, viewer_id: int) -> ViewerDetailResponse:
-    detail = viewer_crud.get_viewer_by_id(db, viewer_id)
-    if not detail:
-        raise HTTPException(status_code=404, detail="Viewer not found")
-    return detail
-
-def download_filtered_viewers_excel(db: Session, filters: ViewerFilter):
-    data = viewer_crud.get_filtered_viewers(db, filters)
-    return generate_excel_from_viewers(data)
-
-def download_viewer_original(viewer_id: int):
-    # 이 함수는 파일 경로를 반환하는 것으로 가정
-    file_path = f"static/downloads/original/{viewer_id}.hwp"
-    return file_path
-
-def download_viewer_combined(viewer_id: int):
-    # 분석 + 원문 엑셀 생성
-    return f"static/downloads/combined/{viewer_id}.xlsx"
+class ViewerService:
+    def __init__(self, db: Session):
+        self.db = db
+    
+    def get_filtered_data(self, filters: ViewerFilter) -> List[Dict[str, Any]]:
+        """Get filtered viewer data based on provided filters"""
+        query = self.db.query(Viewer)
+        
+        # Apply filters
+        if filters.region_id:
+            query = query.filter(Viewer.state.ilike(f"%{filters.region_id}%"))
+        
+        if filters.agency_id:
+            query = query.filter(Viewer.inspection_agency.ilike(f"%{filters.agency_id}%"))
+            
+        if filters.audit_type_id:
+            query = query.filter(Viewer.audit_type.ilike(f"%{filters.audit_type_id}%"))
+            
+        if filters.start_date :
+            query = query.filter(Viewer.date >= filters.start_date)
+            
+        if filters.end_date:
+            query = query.filter(Viewer.date <= filters.end_date)
+            
+        if filters.category_id:
+            query = query.filter(Viewer.category.ilike(f"%{filters.category_id}%"))
+            
+        if filters.task_id:
+            query = query.filter(Viewer.task.ilike(f"%{filters.task_id}%"))
+            
+        if filters.keyword:
+            query = query.filter(Viewer.summary.ilike(f"%{filters.keyword}%"))
+            
+        if not filters.include_special:
+            query = query.filter(Viewer.special_case.is_(None))
+        
+        results = query.all()
+        
+        # Convert to dict format
+        return [
+            {
+                "id": item.id,
+                "state": item.state,
+                "inspection_agency": item.inspection_agency,
+                "disposition_request": item.disposition_request,
+                "related_agency": item.related_agency,
+                "audit_result": item.audit_result,
+                "category": item.category,
+                "task": item.task,
+                "summary": item.summary,
+                "special_case": item.special_case
+            }
+            for item in results
+        ]
