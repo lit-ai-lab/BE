@@ -60,3 +60,10 @@ build/
 alembic/
 alembic.ini
 *.pdf
+
+.vscode-server/
+.ssh/
+
+
+!frontend/FE/
+!frontend/FE/**/*
