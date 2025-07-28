@@ -1,9 +1,16 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql://neondb_owner:npg_rRuahBA2GqQ9@ep-super-thunder-a6p0m6j8.us-west-2.aws.neon.tech/neondb?sslmode=require"
-    
-    class Config:
-        env_file = ".env"
+    # DATABASE_URL: str
+    DATABASE_URL: str ="sqlite:///./gamsa.db"
+    # class Config:
+    #     env_file = ".env"
+    #     env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
 
 settings = Settings()

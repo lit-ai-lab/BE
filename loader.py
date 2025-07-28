@@ -3,7 +3,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect
 from database import SessionLocal, engine
-from models import Base, Viewer, MapStatistic, DetailView, OriginalText
+from models import Base, Viewer, MapStatistic, DetailView, OriginalText, MetaData
 # -----------------------
 # 지역 시군 매핑q
 # -----------------------
@@ -130,7 +130,10 @@ def load_json_to_db(json_path: Path):
             inspection_type = safe_get(item, "감사종류")
             raw_date = safe_get(item, "감사기간")
             date = extract_start_date(raw_date) if raw_date else None
-            audit_result = safe_get(item, "처분요구 및 조치사항")            
+            audit_result = safe_get(item, "처분요구 및 조치사항")  
+            # 변경: audit_result가 '모범사례'인 경우 해당 항목을 건너뜁니다.
+            if audit_result == "모범사례":
+                continue          
             related_agency = safe_get(item, "관련기관")
             disposition_request = safe_get(item, "감사결과종류")
             category = safe_get(item, "auto_분야")
@@ -141,6 +144,7 @@ def load_json_to_db(json_path: Path):
             special_case = safe_get(item, "auto_특이사례", default=None)
             preprocessed_text = safe_get(item, "preprocessed_text", default=None)
             file_hash = safe_get(item, "file_hash")
+            case_uuid = safe_get(item, "case_uuid")  
 
             # ---------- detail_view 먼저 insert ----------
             audit_note = safe_get(item, "감사사항")
@@ -161,9 +165,10 @@ def load_json_to_db(json_path: Path):
                 keyword=keyword,
                 file_size=file_size,
                 registration_date=registration_date,
-                file_hash=file_hash
+                file_hash=file_hash,
             )
-            
+            session.add(detail_entry)
+            session.flush()
 
             # ---------- viewer에 detail_view_id 연결 ----------
             viewer_entry = Viewer(
@@ -187,7 +192,14 @@ def load_json_to_db(json_path: Path):
                 preprocessed_text=preprocessed_text,
                 detail_view_id=detail_entry.id
             )
-            session.add_all([detail_entry, viewer_entry, original_text_entry])
+            # metadata 삽입 feat.daon
+            metadata_entry = MetaData(
+                inspection_agency=inspection_agency,
+                related_agency=related_agency,
+                audit_note=audit_note,
+                case_uuid=case_uuid
+            )
+            session.add_all([detail_entry, viewer_entry, original_text_entry, metadata_entry])
             inserted += 1
             detail_inserted += 1
             

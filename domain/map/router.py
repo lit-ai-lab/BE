@@ -1,19 +1,18 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
+from schemas import RegionTasks
 
 from database import get_db
 from crud.map import (
     # get_top10_categories,
     # get_sunburst_categories_only,
     # get_top10_tasks_by_category,
-    get_category_task_summary
-)
+    get_tasks_by_region,
+    get_category_task_summary)
 
-router = APIRouter(
-    prefix="/api/maps",
-    tags=["Map"]
-)
+router = APIRouter(prefix="", tags=["Map"])
+
 
 def simplify_region_name(region: Optional[str]) -> Optional[str]:
     if region is None:
@@ -44,3 +43,13 @@ def simplify_region_name(region: Optional[str]) -> Optional[str]:
 def get_summary(region: str = None, db: Session = Depends(get_db)):
     region = simplify_region_name(region)
     return get_category_task_summary(db, region)
+
+
+@router.get("/TOP", response_model=List[RegionTasks])
+def tasks_by_region(db: Session = Depends(get_db)):
+    """
+    각 권역별 상위 10개 업무를
+    [{ region: "...", tasks: [ {rank:1,name:"..."}, ... ] }, ...]
+    형태로 반환
+    """
+    return get_tasks_by_region(db)
