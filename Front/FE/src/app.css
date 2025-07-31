@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap');
+
+/* ✅ Tailwind 초기화 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ✅ 전체 html에 폰트 적용 */
+@layer base {
+    html {
+        font-family: 'Noto Sans Korean', sans-serif;
+    }
+}
+
+
+
