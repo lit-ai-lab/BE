@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
+# base=deteractive_base
 #dd
 
 class Viewer(Base):
@@ -67,4 +68,13 @@ class OriginalText(Base):
     preprocessed_text = Column(Text, nullable=True)     #원본텍스트
     detail_view_id = Column(Integer, ForeignKey("detail_view.id"), nullable=True)   #detail.view아이디
     detail_view       = relationship("DetailView", back_populates="originals")
+
+class MetaData(Base):
+    __tablename__ = "metadata"
+
+    id = Column(Integer, primary_key=True)
+    inspection_agency = Column(String, nullable=True)
+    related_agency = Column(String, nullable=True)
+    audit_note = Column(Text, nullable=True)
+    case_uuid = Column(Text, nullable=True)
     
